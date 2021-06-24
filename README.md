@@ -1,10 +1,11 @@
 # vortex_waves
 
-This repository containes scripts and a few text files used to generate the figures in the MWR review article. Note that all
-figure labels have been added/modified with Adobe Illustrator (i.e., not all plots are identical to the published version).
+This repository containes scripts and a few text files used to generate the figures in the MWR review article:
 
 Dahl, J. M. L., 2021: Centrifugal Waves in Tornado-like Vortices: Kelvin's Solutions and Their Applications to Multiple-Vortex
 Development and Vortex Breakdown. Mon. Wea. Rev., submitted.
+
+Note that many figure have been touched up by adding/modifying figure and axis labels (i.e., not all plots are identical to the published version).
 
 The following files are included:
 
