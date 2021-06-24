@@ -4,41 +4,56 @@ import scipy
 from scipy import optimize
 from scipy import special
 
-nmax = 301
+# This script plots the dispersion relation for
+# the sausage modes in a rigid cylindrical vessel. 
+# The roots of the Bessel functions are taken directly 
+# from Python.
+#
+# Questions/comments: johannes.dahl@ttu.edu
 
-m = 0 # Use other script for m = 1
-nnk = 101
-kmax = 6.0
+#-------------------------------------------------------
+# Settings
+#-------------------------------------------------------
+
+m     = 0   # azimuthal wavenumber; use other script for m = 1
+nnk   = 101 # how many k--resolution of the dispersion plot
+kmax  = 6.0 # maximum axial wavenumber
+Omega = 1.0 # angular velocity of the vortex
+a     = 1.0 # radius of the cylinder
+
+#-------------------------------------------------------
+# Start
+#-------------------------------------------------------
+
 k = np.linspace(0,kmax,nnk) # vertical wavenumber
-Omega = 1.0
-a = 1.0
+
+# Obtain roots
 
 bess_zeros = scipy.special.jn_zeros(1, 4)
 
-# omega valid for R = 1.0
+# Calculate wave frequency (nu)
 
 nu0 = bess_zeros[0]
 omega0 = m*Omega + 2.0 * Omega / np.sqrt((nu0**2 / k**2) + 1.0)
 
 nu1 = bess_zeros[1]
-omega1 =  m*Omega + 2.0 * Omega / np.sqrt(((nu1**2 / k**2) + 1.0))
+omega1 = m*Omega + 2.0 * Omega / np.sqrt(((nu1**2 / k**2) + 1.0))
 
 nu2 = bess_zeros[2]
-omega2 =  m*Omega +2.0 * Omega / np.sqrt(((nu2**2 / k**2) + 1.0))
+omega2 = m*Omega +2.0 * Omega / np.sqrt(((nu2**2 / k**2) + 1.0))
 
 nu3 = bess_zeros[3]
-omega3 =  m*Omega +2.0 * Omega / np.sqrt(((nu3**2 / k**2) + 1.0))
+omega3 = m*Omega +2.0 * Omega / np.sqrt(((nu3**2 / k**2) + 1.0))
 
 # Negative omega
 
-
 omega0m = m*Omega - 2.0 * Omega / np.sqrt((nu0**2 / k**2) + 1.0)
 
-omega1m =  m*Omega - 2.0 * Omega / np.sqrt(((nu1**2 / k**2) + 1.0))
+omega1m = m*Omega - 2.0 * Omega / np.sqrt(((nu1**2 / k**2) + 1.0))
 
-omega2m =  m*Omega -2.0 * Omega / np.sqrt(((nu2**2 / k**2) + 1.0))
+omega2m = m*Omega -2.0 * Omega / np.sqrt(((nu2**2 / k**2) + 1.0))
 
-omega3m =  m*Omega -2.0 * Omega / np.sqrt(((nu3**2 / k**2) + 1.0))
+omega3m = m*Omega -2.0 * Omega / np.sqrt(((nu3**2 / k**2) + 1.0))
 
 # Group speeds
 
@@ -111,4 +126,6 @@ if (m == 0):
   plt.savefig("./vessel_dispersion_m0.eps", format = 'eps')
 
 plt.show()
+quit()
 
+# All done.

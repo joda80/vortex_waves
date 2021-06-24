@@ -3,24 +3,36 @@ import matplotlib.pyplot as plt
 import scipy
 import cmath
 import math
-from scipy import optimize
-from scipy import special
-from scipy import misc
+from   scipy import optimize
+from   scipy import special
+from   scipy import misc
 import shapely
-from shapely import geometry
-from shapely.geometry import LineString, Point
+
+# This script plots the dispersion relation for
+# spiral modes in a rigid cylindrical vessel. The 
+# root finder requires a high resolution of the
+# function (nmax must be large) to resolve the peaks.
+# The advantage over the built-in root finder is that
+# no prior information is needed about where the root
+# is located.
+#
+# If the roots cannot be identified, the wave frequency
+# will be zero; in this case adjust nmax and nnk to
+# ensure that all peaks are sufficiently resolved.
+#
+# Questions/comments: johannes.dahl@ttu.edu
 
 #------------------------------------------------
 # Set parameters
 #------------------------------------------------
 
-m = 1 # For m = 0 use other script
-R = 1.0
-Omega = 1.0
-kmax =  6.0 #  11.0
-nmax = 70001
-beta_max = 15.0
-nnk =  26 # For how many k
+m        = 1     # azimuthal wavenumber; for m = 0 use other script
+R        = 1.0   # radius
+Omega    = 1.0   # base-state angular speed
+kmax     =  6.0  # maximum axial wavenumber 
+nmax     = 70001 # number of increments
+beta_max = 15.0  # range of eigenvalues for which a solution is sought
+nnk       =  26  # for how many k (resolution of the dispersion plot)
 
 #-------------------------------------------------
 # Start
@@ -52,11 +64,7 @@ k_arr = np.linspace(0,kmax, nnk)
 
 for k in k_arr:
 
-#  if k == 0:
-#    k = 1.E-12
- 
   g = 2.0*Omega / (np.sqrt( beta**2/k**2 + 1.0  ))
-
 
   bess     = scipy.special.jv (m,R*beta)
   bess_der = scipy.special.jvp(m, R*beta)
@@ -76,6 +84,7 @@ for k in k_arr:
   beta0 = np.zeros(10)
   beta0m = np.zeros(10)
 
+# Find roots for positive omega
 
   for i in np.arange(nmax-1):
     if (lhs[i] > rhs[i] and lhs[i+1] <= rhs[i]):
@@ -84,6 +93,7 @@ for k in k_arr:
       counter = counter + 1
 
 # neg. omega
+
   counterm = 0
   for i in np.arange(nmax-1):
     if (lhs[i] > rhsm[i] and lhs[i+1] <= rhsm[i]):
@@ -91,7 +101,7 @@ for k in k_arr:
       beta0m[counterm] = beta[i]
       counterm = counterm + 1
 
-  print('k   beta   beta_retro', k, beta0, beta0m)
+  print('k   beta_cograde   beta_retrograde', k, beta0, beta0m)
 
 #---------------------------------------------------
 # Plot graphical version of the solution for some k
@@ -123,15 +133,14 @@ for k in k_arr:
     plt.plot(beta, lhs, 'k', linewidth = 1.0) 
     plt.ylim(-2,8)
     plt.xlim(0,beta_max)
-#    plt.xlabel('$\beta$')
     plt.ylabel('rhs (blue) and lhs (black)')
 
 #----------------------------------------
 # Calculate wave frequency 
 #----------------------------------------
 
-  omega_n = m *Omega +  2.0 * k / np.sqrt(beta0**2 + k**2)
-  omega_nm = m *Omega -  2.0 * k / np.sqrt(beta0m**2 + k**2) 
+  omega_n  = m * Omega + 2.0 * k / np.sqrt(beta0**2 + k**2)
+  omega_nm = m * Omega - 2.0 * k / np.sqrt(beta0m**2 + k**2) 
 
   if (k == 0):
     omega_n[0] = m *Omega
@@ -151,11 +160,6 @@ for k in k_arr:
     omega1m_arr[c1] = omega_nm[1]
     omega2m_arr[c1] = omega_nm[2]
 
- # elif (m == 1):
- #   omega0_arr[c1] = m + 2.0
- #   omega1_arr[c1] = omega_n[0]
- #   omega2_arr[c1] = omega_n[1]
-
   k_arr     [c1]  = k
 
   c1 = c1 + 1
@@ -164,6 +168,7 @@ print(omega0_arr)
 print(k_arr)
 
 # Obtaining the group speeds (centered difference; at end points: one-sided differences)
+# If higher accuracy is desired, the group speed may be calculated analytically as well.
 
 cg0 = 0.0*omega0_arr
 dk =  kmax / nnk
@@ -258,6 +263,7 @@ plt.legend(loc='upper right')
 plt.ylim(0, kmax)
 plt.ylim(-0.5,2.0)
 plt.xlim(0,kmax)
+
 # Group speed
 
 ax = plt.subplot(4,1,4)
@@ -284,4 +290,4 @@ if (m == 1):
 plt.show()
 quit()
 
-
+# All done.

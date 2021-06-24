@@ -4,7 +4,16 @@ import scipy
 from scipy import optimize
 from scipy import special
 
-icase = 2 
+# Plot perturbation and total flows for spiral Kelvin modes
+# in the horizontal plane.  Questions/comments: johannes.dahl@ttu.edu.
+
+# Select case:
+
+#icase = 1 # Bounded Couette flow
+icase = 2 # Rankine vortex without axial flow
+#icase = 3 #  Rankine vortex WITH axial core flow, stable modes
+#icase = 4 # Rankine vortex WITH axial core flow, unstable modes
+#icase = 5 # Cylindrical vortex sheet
 
 #=========================================================================
 # BOUNDED VORTEX (Couette)
@@ -22,7 +31,7 @@ if icase == 1: # Bounded
   Omega = 1.0
   iretro = 0
 
-# Bounded flow
+# Bounded flow: Allowed eigenvalues
 
 #  m = 0
 #  alpha = 3.8317
@@ -116,7 +125,7 @@ if icase == 1: # Bounded
   theta = np.linspace(0,2.0*np.pi, nn)
   rpr = -bd_scale * w0/g * (k/beta * Jpr_R - 2.0 * Omega*m*k/(g*beta**2 * Rm) * Jm_R) * np.cos(k*z + m*theta - omega*t)
 
-#  d = R + rpr # not needed in polar form
+#  d = R + rpr 
 
   xpr = rpr*np.cos(theta)
   ypr = rpr*np.sin(theta)
@@ -149,23 +158,10 @@ if icase == 1: # Bounded
   istride = 4
   jstride = 4
 
-#  CS = plt.contourf(X,Y,THETA, levels=np.linspace(0,6.29, 21)) 
-#  plt.colorbar(CS)
-  #plt.contour(X,Y,d, levels =[R], colors = 'r' )
-#  plt.clabel(CS)
-
   ax = plt.subplot(1,2,1)
-#
-#  plt.contourf(X,Y,v)
 
   plt. contour(X,Y,RR, levels = [R], colors='k', linewidths=2)
-#  ax = plt. contour(X,Y,d, levels = [R-dr], colors='r', linewidths=2)
   plt.plot(xd, yd, color='r', linewidth='2.0')
-
-#  plt.quiver(X[xstart:xend:istride, ystart:yend:jstride],
-#  Y[xstart:xend:istride, ystart:yend:jstride],
-#  uc[xstart:xend:istride, ystart:yend:jstride],
-#  vc[xstart:xend:istride, ystart:yend:jstride], scale = 10.0)
 
   arrowsize=0.6 
   plt.streamplot(X,Y,uc,vc, density=2.5,arrowsize=0.6, linewidth=0.3, color='k')
@@ -177,16 +173,12 @@ if icase == 1: # Bounded
   ax = plt.subplot(1,2,2)
 
   plt. contour(X,Y,RR, levels = [R], colors='k', linewidths=2)
-#  plt. contour(X,Y,d, levels = [R-dr], colors='r', linewidths=2)  
-#  plt.plot(xd, yd, color='r', linewidth='2.0')
 
   plt.quiver(X[xstart:xend:istride, ystart:yend:jstride],
   Y[xstart:xend:istride, ystart:yend:jstride],
   uuc[xstart:xend:istride, ystart:yend:jstride],
   vvc[xstart:xend:istride, ystart:yend:jstride], scale = 20.0)
   plt.xlabel('x')
-
-#  plt.streamplot(X,Y,uuc,vvc, density=5.5,arrowsize=0.6, linewidth=0.3, color='k')
 
   if (m == 1):
     plt.savefig("./vessel_horiz_structure_m1.eps", format = 'eps')
@@ -333,7 +325,6 @@ elif (icase == 2): # Rankine vortex
   ppert = w0 * g*rho/k * Jm * np.cos(k*z + m*THETA - omega*t) 
 
   if (iretro == 1):
-#    vv = Omega * RR + v
     vv = 2.5*Omega * RR + v
   
   w = w0 * Jm * np.cos(k*z + m*THETA - omega*t)
@@ -343,7 +334,7 @@ elif (icase == 2): # Rankine vortex
   Kpr_R = scipy.special.kvp(m, k*R)
   Km_R  = scipy.special.kv (m, k*R)
 
-  # Matching dispacement 
+  # Matching dispacement using kinematic BC
 
   w1 = - k * w0/(g * beta**2) * (g*beta*Jpr_R - 2.0*m*Omega/R * Jm_R) / Kpr_R
   print(w1)
@@ -364,6 +355,8 @@ elif (icase == 2): # Rankine vortex
   dx =  xr + xpr
   dy = yr + ypr
 
+  # Matching pressure (sanity check)
+
   w1 = w0 * Jm_R/Km_R
   
   print(w1)
@@ -379,10 +372,6 @@ elif (icase == 2): # Rankine vortex
         if (iretro == 1):
 #          vv [i,j]  = Omega* R**2/RR[i,j] + v[i,j]     
           vv [i,j]  = 2.5 * Omega* R**2/RR[i,j] + v[i,j]
-
-  # v' and v discontinuous at r = R
-  # plt.plot(XX[101,:], vv[101,:])
-  # plt.show()
 
   uc = np.cos(THETA) * u - np.sin(THETA) * v
   vc = np.sin(THETA) * u + np.cos(THETA) * v
@@ -410,34 +399,11 @@ elif (icase == 2): # Rankine vortex
   ax = plt.subplot(1,2,1)
   
   plt.contour(X,Y,RR, levels = [R], colors='k', linestyles='dashed', linewidths=2)
- # plt.contour(X,Y,d, levels = [R], colors='r', linewidths=2)
-#  plt.plot(dx,dy, color='r', linewidth = 2)  # Displacement field
   plt.streamplot(X,Y,uc,vc, density=3.0,arrowsize=0.6, linewidth=0.3, color='k')
-
-
-#  levs = np.linspace(-0.4, 0.4, 17)
-#  plt.contourf(X,Y,ppert, levels=levs, cmap='BrBG_r')
 
   plt.xlim(-1.5, 1.5)
   plt.xlabel('x')
   plt.ylabel('y')
-
-
- # plt.quiver(X[xstart:xend:istride, ystart:yend:jstride],
- # Y[xstart:xend:istride, ystart:yend:jstride],
- # uc[xstart:xend:istride, ystart:yend:jstride],
- # vc[xstart:xend:istride, ystart:yend:jstride], scale = 50.0)
-
-# arrowsize=0.6 
-#  if (iunst != 1):
-#    f = 1
- #   plt.streamplot(X,Y,uc,vc, density=2.0,arrowsize=0.6, linewidth=0.3, color='k')
- #   plt.xlabel('x')
- #   plt.ylabel('y')
-#  elif (iunst == 1):
-#    plt.streamplot(X,Y,uc,vc, density=3.0,arrowsize=0.6, linewidth=0.3, color='k')
-#    plt.xlabel('x')
-#    plt.ylabel('y')
 
 #----------------------------------------------
 # Right panel
@@ -446,25 +412,18 @@ elif (icase == 2): # Rankine vortex
   ax = plt.subplot(1,2,2)
 
   plt.contour(X,Y,RR, levels = [R], colors='k', linestyles='dashed', linewidths=2)
-#  plt.contour(X,Y,d, levels = [R], colors='r', linewidths=2)
   
-#  plt.plot(xr,yr, color='k', linestyle='dashed', linewidth = 2)
-#  plt.plot(dx,dy, color='r', linewidth = 2)
-
   sc = 20.0
   if (iretro == 1):
     sc = 50.0
     istride = 6
     jstride = 6
 
-
   plt.quiver(X[xstart:xend:istride, ystart:yend:jstride],
   Y[xstart:xend:istride, ystart:yend:jstride],
   uuc[xstart:xend:istride, ystart:yend:jstride],
   vvc[xstart:xend:istride, ystart:yend:jstride], scale = sc)
   plt.xlabel('x')
-# arrowsize=0.6 
-#  plt.streamplot(X,Y,uuc,vvc, density=2.0,arrowsize=0.6, linewidth=0.3, color='k')
 
   plt.savefig("./rankine_pure_horiz_structure_m1_third.eps", format = 'eps')
 
@@ -589,12 +548,6 @@ elif (icase == 3): # Rankine vortex
   dx =  xr + xpr
   dy = yr + ypr
 
-#  CS=plt.contour(X, Y, RR, levels=[R])
-#  plt.plot(theta,rpr)
-#  plt.clabel(CS)
-#  plt.show()
-#  quit()
-
  # Assign values vor vortex periphery 
 
   for i in np.arange(nmax):
@@ -606,17 +559,7 @@ elif (icase == 3): # Rankine vortex
         vv[i,j]  = Omega* R**2/RR[i,j] + v[i,j]
         ppert[i,j] = w1 * g2 * rho/k * Km[i,j] * np.cos(k*z + m*THETA[i,j] - omega*t)
 
-#  plt.plot(XX[101,:], ppert[101,:])
-#  plt.show()
-
-
-#  plt.plot(YY[:,101], ppert[:,101])
-#  plt.show()
-#  quit()
-
- # for i in np.arange(0,nmax):
- #   print(XX[101,i], ppert[101, i])
- # quit()
+  # Cartesian components
 
   uc = np.cos(THETA) * u - np.sin(THETA) * v
   vc = np.sin(THETA) * u + np.cos(THETA) * v
@@ -644,19 +587,11 @@ elif (icase == 3): # Rankine vortex
   ax = plt.subplot(1,2,1)
   
   plt.contour(X,Y,RR, levels = [R], colors='k', linestyles='dashed', linewidths=2)
- # plt.contour(X,Y,d, levels = [R], colors='r', linewidths=2)
-#  plt.plot(dx,dy, color='r', linewidth = 2)  # Displacement field
   plt.streamplot(X,Y,uc,vc, density=3.0,arrowsize=0.6, linewidth=0.3, color='k')
 
   plt.xlim(-1.5, 1.5)
   plt.xlabel('x')
   plt.ylabel('y')
-
-
- # plt.quiver(X[xstart:xend:istride, ystart:yend:jstride],
- # Y[xstart:xend:istride, ystart:yend:jstride],
- # uc[xstart:xend:istride, ystart:yend:jstride],
- # vc[xstart:xend:istride, ystart:yend:jstride], scale = 50.0)
 
 #------------------------------------
 # Right panel
@@ -665,10 +600,6 @@ elif (icase == 3): # Rankine vortex
   ax = plt.subplot(1,2,2)
 
   plt.contour(X,Y,RR, levels = [R], colors='k', linestyles='dashed', linewidths=2)
-#  plt.contour(X,Y,d, levels = [R], colors='r', linewidths=2)
-  
-#  plt.plot(xr,yr, color='k', linestyle='dashed', linewidth = 2)
-#  plt.plot(dx,dy, color='r', linewidth = 2)
 
   sc = 20
   plt.quiver(X[xstart:xend:istride, ystart:yend:jstride],
@@ -676,8 +607,6 @@ elif (icase == 3): # Rankine vortex
   uuc[xstart:xend:istride, ystart:yend:jstride],
   vvc[xstart:xend:istride, ystart:yend:jstride], scale = sc)
   plt.xlabel('x')
-# arrowsize=0.6 
-#  plt.streamplot(X,Y,uuc,vvc, density=2.0,arrowsize=0.6, linewidth=0.3, color='k')
 
   if (m == 1):
     plt.savefig("./rankine_pure_horiz_structure_m1_fundamental.eps", format = 'eps')
@@ -762,22 +691,16 @@ elif (icase == 4): # Rankine vortex
   Km  = scipy.special.kv (m, k*RR)
   Kpr = scipy.special.kvp(m, k*RR)
 
+# Use complex form and let Python do the work
+
   argu = k*z + m*THETA - omega*t
   wave = np.exp(argu*1j)
 
-#  u = 1j * w0 * k / (g1 * beta**2) * (g1*beta*Jpr - 2.0*m*Omega / RR * Jm) * wave
-#  u = 1j * w0 * k/beta * (Jpr - 2.0*m*Omega / (RR*g1*beta) * Jm * wave
   u = 1j * w0 * (k/beta * Jpr - k/(beta**2 * g1) * 2.0 * Omega * m / RR * Jm) * wave  
   v = w0 * k / (g1 * beta**2) * (2.0*Omega*beta*Jpr - (m*g1/RR)*Jm) * wave
-
-#  u = -(w0 * k/beta_sq * betar * Jpr - w0 * 2.0*Omega*m*k / (RR*g))
-  #w0 * g * (g*beta*Jpr - 2.0*m*Omega/RR * Jm)     / (k * (4.0 * Omega**2 - g**2)) * (-np.sin(k*z + m*THETA - omega*t))
-#  v = w0 * g * (2.0*Omega * beta * Jpr - m*g/RR * Jm) / (k * (4.0 * Omega**2 - g**2)) *   np.cos(k*z + m*THETA - omega*t)
   vv = Omega * RR + v.real
 
   pbase = p0 - 0.5*rho*Omega**2*R**2 + 0.5*rho*Omega**2*(RR**2 - R**2)
-
-#  pbase2 = p0 - rho*Omega**2*R**2 + 0.5*rho*Omega**2*RR**2 
 
   w = w0 * Jm * wave
   ppert = rho*g1/k * w
@@ -787,8 +710,12 @@ elif (icase == 4): # Rankine vortex
   Kpr_R = scipy.special.kvp(m, k*R)
   Km_R  = scipy.special.kv (m, k*R)
 
+# Match solutions using kinematic BC
+
   w1 = - k * w0 *g2/(g1**2 * beta**2) * (g1*beta*Jpr_R - 2.0*m*Omega/R * Jm_R) / Kpr_R
   print(w1)
+
+# Check if the result is the same using the dynamic BC
 
   w1 = w0 * g1/g2 * Jm_R/Km_R
   print(w1)
@@ -830,20 +757,6 @@ elif (icase == 4): # Rankine vortex
 
   p = pbase + ppert.real
 
-#   plot p', P
-#  plt.plot(XX[101,:], ppert[101,:])
-#  plt.show()
-#  quit()
-
-
-#  plt.plot(YY[:,101], ppert[:,101])
-#  plt.show()
-#  quit()
-
-#  for i in np.arange(0,nmax):
-#    print(XX[101,i], ppert.real[101,i])
-#  quit()
-
   uuc = np.cos(THETA) * u.real - np.sin(THETA) * vv
   vvc = np.sin(THETA) * u.real + np.cos(THETA) * vv
 
@@ -867,7 +780,6 @@ elif (icase == 4): # Rankine vortex
   ax = plt.subplot(1,2,1)
   
   plt.contour(X,Y,RR, levels = [R], colors='k', linestyles='dashed', linewidths=2)
-#  plt.plot(dx,dy, color='r', linewidth = 2)  # Displacement field
 
   plt.streamplot(X,Y,uc,vc, density=3.0,arrowsize=0.6, linewidth=0.3, color='k')
   levs = np.linspace(-0.4, 0.4, 17)
@@ -877,25 +789,6 @@ elif (icase == 4): # Rankine vortex
   plt.xlim(-1.5, 1.5)
   plt.xlabel('x')
   plt.ylabel('y')
-
-#  plevs = [-0.05, 0.05]
-#  plt.contour(X,Y, ppert.real, levels=plevs, linewidths=1.5, colors = 'r')
-
-#  plt.quiver(X[xstart:xend:istride, ystart:yend:jstride],
-#  Y[xstart:xend:istride, ystart:yend:jstride],
-#  uc[xstart:xend:istride, ystart:yend:jstride],
-#  vc[xstart:xend:istride, ystart:yend:jstride], scale = 50.0)
-
-# arrowsize=0.6 
-#  if (iunst != 1):
-#    f = 1
- #   plt.streamplot(X,Y,uc,vc, density=2.0,arrowsize=0.6, linewidth=0.3, color='k')
- #   plt.xlabel('x')
- #   plt.ylabel('y')
-#  elif (iunst == 1):
-#    plt.streamplot(X,Y,uc,vc, density=3.0,arrowsize=0.6, linewidth=0.3, color='k')
-#    plt.xlabel('x')
-#    plt.ylabel('y')
 
   # -------------------------------
   # Right panel
@@ -909,12 +802,6 @@ elif (icase == 4): # Rankine vortex
   plt.contourf(X,Y, p-p0, levels=levs, cmap='Blues_r')
   plt.colorbar() 
 
-
-  #plt.plot(dx,dy, color='r', linewidth = 2)  # Displacement field
-  
-#  plt.plot(xr,yr, color='k', linestyle='dashed', linewidth = 2)
-#  plt.plot(dx,dy, color='r', linewidth = 2)
-
   sc = 15.0 
 
   plt.quiver(X[xstart:xend:istride, ystart:yend:jstride],
@@ -922,8 +809,6 @@ elif (icase == 4): # Rankine vortex
   uuc[xstart:xend:istride, ystart:yend:jstride],
   vvc[xstart:xend:istride, ystart:yend:jstride], scale = sc)
   plt.xlabel('x')
-# arrowsize=0.6 
-#  plt.streamplot(X,Y,uuc,vvc, density=2.0,arrowsize=0.6, linewidth=0.3, color='k')
 
   plt.savefig("./rankine_axial_unstable_structure_m1.eps", format = 'eps')
 
@@ -986,9 +871,6 @@ elif (icase == 5): # Rotunno's cylindrical vortex sheet
   argu = 1j*(k*z + m*THETA - omega*t)
   wave = np.exp(argu)
 
-#  u = w0 * Ipr * np.sin(k*z + m*THETA - omegar*t)
-#  v = w0 * m/(RR * k) * Im * np.cos(k*z + m*THETA - omegar*t)
-
   u_cp = -1j * w0 *  Ipr * wave
   v_cp = w0 * m/(RR * k) * Im * wave
   w_cp = w0 * Im *wave 
@@ -996,8 +878,6 @@ elif (icase == 5): # Rotunno's cylindrical vortex sheet
   u = u_cp.real
   v = v_cp.real
   w = w_cp.real
-
-#  ppert = (rho/k)*w0*Im * (g1r*np.cos(k*z + m*THETA - omegar*t) - g1i * np.sin(k*z + m*THETA - omegar*t))
 
   ppert_cp = w0 * g1 * rho/k*Im * wave
   ppert = ppert_cp.real
@@ -1017,6 +897,7 @@ elif (icase == 5): # Rotunno's cylindrical vortex sheet
   Km_R = scipy.special.kv(m, k*R)
 
   # Should be identical for given k, omega
+  
   w1 = w0 * Ipr_R/Kpr_R * g2/g1  # Kinematic
   print(w1, k)
   w1 = w0 * (g1 * Im_R - k*Omega**2*R/g1 * Ipr_R)/(g2 * Km_R)  # Dynamic
@@ -1031,9 +912,8 @@ elif (icase == 5): # Rotunno's cylindrical vortex sheet
   nn = 101
   theta = np.linspace(0,2.0*np.pi, nn)
   rpr =  w0 /(g1r**2 + g1i**2) * Ipr_R * (g1r * np.cos(k*z + m*theta - omegar*t) + g1i*np.sin(k*z + m*theta - omegar*t))
-  rpr2 =  1.0/(g2r**2 + g2i**2) * Kpr_R * (C * np.cos(k*z + m*theta - omegar*t) - D*np.sin(k*z + m*theta - omegar*t))
 
-#  d = R + rpr # not needed in polar form
+#  d = R + rpr
 
   xpr = rpr*np.cos(theta)
   ypr = rpr*np.sin(theta)
@@ -1043,15 +923,6 @@ elif (icase == 5): # Rotunno's cylindrical vortex sheet
 
   dx =  xr + xpr
   dy = yr + ypr
-
-# test
-
-  xpr2 = rpr2*np.cos(theta)
-  ypr2 = rpr2*np.sin(theta)
-
-  dx2 =  xr + xpr2
-  dy2 = yr + ypr2
-# --
 
   A = w1r*g2r - w1i*g2i
   B = w1r*g2i + w1i*g2r
@@ -1064,11 +935,6 @@ elif (icase == 5): # Rotunno's cylindrical vortex sheet
         v[i,j] = w1 * m/(k*RR[i,j]) * Km[i,j] * wave[i,j]
         w[i,j] = w1 * Km[i,j] * wave[i,j] 
         ppert[i,j] = w1 * g2*rho/k * Km[i,j]  * wave[i,j]
-
-#        u[i,j] =  Kpr[i,j] * (w1r* np.sin(k*z + m*THETA[i,j] - omegar*t) + w1i* np.cos(k*z + m*THETA[i,j] - omegar*t))
-#        v[i,j] = m/(k*RR[i,j]) * Km[i,j] * (w1r*np.cos(k*z + m*THETA[i,j] - omegar*t) - w1i*np.sin(k*z + m*THETA[i,j] - omegar*t))
-#        w[i,j] = Km[i,j] * (w1r*np.cos(k*z + m*THETA[i,j] - omegar*t) - w1i*np.sin(k*z + m*THETA[i,j] - omegar*t))
-#        ppert[i,j] = (rho/k)*Km[i,j] *(A*np.cos(k*z + m*THETA[i,j] - omegar*t) - B*np.sin(k*z + m*THETA[i,j] - omegar*t))
         pbase[i,j]  = p0 - rho/2.0 * Omega**2 * R**4/RR[i,j]**2
         vv[i,j]  = Omega* R**2/RR[i,j]  # Just the base state 
  
@@ -1114,18 +980,9 @@ elif (icase == 5): # Rotunno's cylindrical vortex sheet
 
   plt. contour(X,Y,RR, levels = [R], linestyles='dashed', colors='k', linewidths=2)
   
-  #plt.plot(dx,dy,linewidth='2', color='r') 
-  #plt.plot(dx2,dy2,linewidth='1', color='b')
-
   levs = np.linspace(-0.4, 0.4, 17)
   cs=plt.contourf(X,Y,ppert.real, levels=levs, cmap='BrBG_r')
   plt.colorbar(cs) #, orientation='horizontal')
-
-#  plt.quiver(X[xstart:xend:istride, ystart:yend:jstride],
-#  Y[xstart:xend:istride, ystart:yend:jstride],
-#  uc[xstart:xend:istride, ystart:yend:jstride],
-#  vc[xstart:xend:istride, ystart:yend:jstride],  scale = 10.0)
-
 
   arrowsize=0.6 
   plt.streamplot(X,Y,uc,vc, density=2.0,arrowsize=0.6, linewidth=0.3, color='k')
@@ -1150,8 +1007,6 @@ elif (icase == 5): # Rotunno's cylindrical vortex sheet
   utc[xstart:xend:istride, ystart:yend:jstride],
   vtc[xstart:xend:istride, ystart:yend:jstride], scale = 10.0)
 
-# arrowsize=0.6 
-#  plt.streamplot(X,Y,uuc,vvc, density=2.0,arrowsize=0.6, linewidth=0.3, color='k')
   plt.xlabel('x (m)')
   
   plt.savefig("./rotunno_m2.eps", format = 'eps')

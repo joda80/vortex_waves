@@ -10,8 +10,20 @@ import shapely
 from shapely import geometry
 from shapely.geometry import LineString, Point
 # 
-# Corrected version of the solver for stable Kelvin modes
-# in a swirling Rankinw vortex (Loiseleux scenario).
+# This script plots the dispersion relation for
+# stable spiral modes in a Rankine vortex with an upward jet in the core.
+# The solution for the unstable mode is read and also plotted. 
+# The root finder requires a high resolution of the
+# function (nmax must be large) to resolve the peaks.
+# The advantage over the built-in root finder is that
+# no prior information is needed about where the root
+# is located.
+#
+# If the roots cannot be identified, the wave frequency
+# will be zero; in this case adjust nmax and nnk to
+# ensure that all peaks are sufficiently resolved.
+#
+# Questions/comments: johannes.dahl@ttu.edu
 #
 #------------------------------------------------
 # Set parameters
@@ -21,32 +33,16 @@ m = 1 # Limited to positive wavenumbers
 
 # Best not to change these:
 
-kmax = 6.0
-nmax = 90001
-beta_max = 13.0 # Needs to cover all three roots
-S = 1.0
-nnk = 31 #11# 31 # For how many k
-
-kmax = 2.2
-nmax = 40000
-nnk = 2
-
-W = 1.0
-Omega = 1.0
+kmax     = 6.0  # maximum axial wavenumber
+nmax     = 90001 # resolution of the curves
+beta_max = 13.0 # maximum eigenvalue
+S        = 1.0 # swirl ratio
+nnk      = 31  For how many k
+W        = 1.0 # axial velocity
 
 #-------------------------------------------------
 # Start
 #-------------------------------------------------
-
-#beta = 3.8317
-#r0 = 1.20051152
-#u0 = -0.25655284
-#jv = scipy.special.jv(1, beta*r0)
-#w0 = 1.0/np.pi * u0 * 3.8317/jv
-#print(w0)
-#print(beta/np.pi)
-#
-#quit()
 
 omega0_arr = np.zeros(nnk)
 omega1_arr = np.zeros(nnk)
@@ -136,9 +132,6 @@ for k in np.linspace(0.01,kmax,nnk):
 # End loop through beta
 
   # Finding the intersections in decreasing branches.
-  # First reduce the rhs so it intersects the imperfectly resolved
-  # peaks.  This increses the solution just a little, but close enough
-  # for our purposes.
  
   counter = 0
 
@@ -147,6 +140,8 @@ for k in np.linspace(0.01,kmax,nnk):
       val  [counter] = rhs1d[i] # value of lhs where lhs = rhs 
       beta0[counter] = beta_arr[i]
       counter = counter + 1
+
+# Retrograde/countergrade modes
 
   counterm = 0
 
@@ -162,8 +157,6 @@ for k in np.linspace(0.01,kmax,nnk):
 
   ax = plt.subplot(2,1,1)
 
-#  if ((k >= 3.73 and k<=3.74) or k == 3.68): #> 0.1 and c1 % 30 == 0)):
-#  if ((k >= 3.73 and k<=3.74 or k == 1.008) or k == 2.505): #> 0.1 and c1 % 30 == 0)):
   if(k >= 1.0 and k<=1.2): 
     y = np.linspace(0, beta_max, nmax)
 
@@ -195,10 +188,8 @@ for k in np.linspace(0.01,kmax,nnk):
       plt.ylim(-20, 30)
     elif (m == 1):
       plt.ylim(-10,30)
-#    plt.xlabel('$\beta$')
     plt.ylabel('rhs (blue) and lhs (black)')
-  #  plt.show()
-  #  quit()
+
 #----------------------------------------
 # Calculate wave frequency 
 #----------------------------------------
@@ -209,7 +200,6 @@ for k in np.linspace(0.01,kmax,nnk):
 
   omega_nm = m*S + k - 2.0 * k / np.sqrt(beta0m**2 + k**2) -m*S -k
 
-#  print('H', c1, k, beta0[0], omega_n[0], omega_nm[0], beta0m[0]) #, omega_n[0],  np.sqrt(beta0[0]**2 + k**2))
   print('k: ', k)
   print('beta and INTRINSIC frequency')
   print(beta0[0], omega_n[0])
@@ -229,11 +219,6 @@ for k in np.linspace(0.01,kmax,nnk):
   omega0m_arr[c1] = omega_nm[0]
   omega1m_arr[c1] = omega_nm[1]
   omega2m_arr[c1] = omega_nm[2]
-
- # elif (m == 1):
- #   omega0_arr[c1] = m + 2.0
- #   omega1_arr[c1] = omega_n[0]
- #   omega2_arr[c1] = omega_n[1]
 
   k_arr     [c1]  = k
 
@@ -271,6 +256,7 @@ cg2[nnk-2] = (omega2_arr[nnk-2]-omega2_arr[nnk-3]) / (k_arr[nnk-2] - k_arr[nnk-3
 cg2[nnk-1] = (omega2_arr[nnk-1]-omega2_arr[nnk-2]) / (k_arr[nnk-1] - k_arr[nnk-2])
 
 #--
+
 cg0m = 0.0*omega0_arr
 
 cg0m[0] = (omega0m_arr[1]-omega0m_arr[0]) / (k_arr[1] - k_arr[0])
@@ -298,7 +284,7 @@ cg2m[nnk-1] = (omega2m_arr[nnk-1]-omega2m_arr[nnk-2]) / (k_arr[nnk-1] - k_arr[nn
 
 # Read unstable phase speed
 
-infile2 = './dispersion_mp1_S1_longwave.txt'
+infile2 = './dispersion_loiseleux_mp1_S1.txt'
 
 [k1, omega_r1, omega_i1, beta_unst, omega_intr]  = np.transpose(np.loadtxt(infile2, skiprows=1))
 
@@ -328,7 +314,6 @@ if (m == 0):
   plt.ylim(-2.0, 2.0)
 
   plt.legend()
-#plt.xlabel('$k$')
   plt.ylabel('$\omega$')
 
   ax = plt.subplot(3,1,3)
@@ -345,17 +330,12 @@ if (m == 0):
 
   plt.ylim(-1.0, 1.0)
 
-#  plt.plot(k_arr, cg0, 'r', linewidth = 2.0, linestyle='--')
-#  plt.plot(k_arr, cg1, 'g', linewidth = 2.0, linestyle='--')
-#  plt.plot(k_arr, cg2, 'b', linewidth = 2.0, linestyle='--')
-
 elif (m == 1):
   plt.grid(True)
 
   plt.grid(True)
   plt.plot(k_arr, omega0_arr, 'r', linewidth = 1.5, label='$g_1$')
   plt.plot(k_arr, omega1_arr, 'k', linewidth = 1.5, label='$g_2$')
-#  plt.plot(k_arr, omega2_arr, 'b', linewidth = 1.5, label='$g_3$')
 
   plt.plot(k_arr, omega0m_arr, 'k', linestyle='-.', linewidth = 1.5,  label='$g_0$')
   plt.plot(k_arr, omega1m_arr, 'r', linestyle='--', linewidth = 1.5, label='$g_1$')
@@ -365,34 +345,13 @@ elif (m == 1):
 
   plt.plot(k1, omega_r1, 'b', linestyle='-', linewidth = 2.5, label='$g_{unst}$')
 
-#  plt.plot(k1, omega_r1_as, 'k', linestyle='--', linewidth = 2.0 )
-
   plt.legend()
   plt.xlim(0,7)
   plt.ylim(-2.2,2.0)
   plt.xlabel('$k (m^{-1})$')
   plt.ylabel('$g (s^{-1})$')
  
-#  ax = plt.subplot(3,1,3)
-#  plt.grid(True)
-#  plt.plot(k_arr, omega0_arr/k_arr, 'r', linewidth = 1.5, label='$c_1$')
-#  plt.plot(k_arr, omega1_arr/k_arr, 'g', linewidth = 1.5, label='$c_2$')
-#  plt.plot(k_arr, omega2_arr/k_arr, 'b', linewidth = 1.5, label='$c_3$')
-
-#  plt.plot(k_arr, omega0m_arr/k_arr, 'r', linestyle='--', linewidth = 1.5)
-#  plt.plot(k_arr, omega1m_arr/k_arr, 'g', linestyle='--', linewidth = 1.5)
-#  plt.plot(k_arr, omega2m_arr/k_arr, 'b', linestyle='--', linewidth = 1.5)
-
-#  plt.ylim (-2,2.5)
-
-#plt.legend()
-#plt.xlabel('$k (s^{-1})$')
-#plt.ylabel('$c$')
-
-if (m == 0):
-  plt.savefig("./kelvin_axial_dispersion_m0.eps", format = 'eps')
-elif (m == 1):
-  plt.savefig("./kelvin_axial_dispersion_m1.eps", format = 'eps')
+plt.savefig("./kelvin_axial_dispersion_m1.eps", format = 'eps')
 
 plt.show()
 quit()

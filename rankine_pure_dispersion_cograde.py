@@ -13,6 +13,15 @@ from shapely.geometry import LineString, Point
 # Solving Kelvin's equation 50 (nondimensional version)
 # Here we define beta, find the solution of the dispersion
 # relation, and then calculate omega.
+# The code does not utilize Python's built-in root finding
+# functions because the root must be approximately known for these to work;
+# the present version simply retraces the function and
+# identifies cross sections with the x-axis.  nmax needs
+# to be quite large (O(E5) to resolve the peaks.  If
+# the roots are not identified (the dispersion plot is discontinuous), 
+# adjusting nnk and nmax usually solves the problem.
+#
+# Questions: johannes.dahl@ttu.edu
 #
 #------------------------------------------------
 # Set parameters
@@ -22,9 +31,9 @@ m = 2 # Limited to positive wavenumbers;
 
 # Best not to change these:
 
-kmax =  6.0 #  11.0
+kmax =  6.0 
 nmax = 100001
-beta_max = 14.0#11.0
+beta_max = 14.0
 
 nnk = 29
 
@@ -33,16 +42,6 @@ nnk = 29
 #-------------------------------------------------
 
 Omega = 1.0
-
-#beta = 3.8317
-#r0 = 1.20051152
-#u0 = -0.25655284
-#jv = scipy.special.jv(1, beta*r0)
-#w0 = 1.0/np.pi * u0 * 3.8317/jv
-#print(w0)
-#print(beta/np.pi)
-#
-#quit()
 
 omega0_arr = np.zeros(nnk)
 omega1_arr = np.zeros(nnk)
@@ -97,16 +96,6 @@ for k in np.linspace(0.0,kmax,nnk):
 
 # Dispersion relation
 
-# Little test, lhs going to zero for large k:
-#      for i in np.arange(4):
-#        dk = 40.0
-#        mbess     = scipy.special.kv (m, dk*i+1.E-12)
-#        mbess_der = scipy.special.kvp(m, dk*i+1.E-12)
-#        rhs = -1.0/ (dk * i+1.E-12) * mbess_der/(mbess+1.0E-12)
-#        print(i, dk*i, rhs)
-#      quit()
-
-
       lhs = 1.0/beta *  bess_der/(bess+1.0E-12)
       rhs = -1.0/ k * mbess_der/(mbess+1.0E-12) + 2.0*m / (g * beta**2) 
 
@@ -116,9 +105,6 @@ for k in np.linspace(0.0,kmax,nnk):
 # End loop through beta
 
   # Finding the intersections in decreasing branches.
-  # First reduce the rhs so it intersects the imperfectly resolved
-  # peaks.  This increses the solution just a little, but close enough
-  # for our purposes.
  
   counter = 0
 
@@ -134,7 +120,6 @@ for k in np.linspace(0.0,kmax,nnk):
 
   ax = plt.subplot(3,1,1)
 
-#  if ((k > 0.1 and c1 % 30 == 0)):
   if (k >= 1.0 and k < 1.1):
     y = np.linspace(0, beta_max, nmax)
 
@@ -163,8 +148,7 @@ for k in np.linspace(0.0,kmax,nnk):
     omega_n[1] = m*Omega 
     omega_n[2] = m*Omega
 
-  print('H', c1, k, beta0, omega_n[0]) #, omega_n[0],  np.sqrt(beta0[0]**2 + k**2))
-
+  print(c1, k, beta0, omega_n[0]) 
 
   omega0_arr[c1] = omega_n[0]
   omega1_arr[c1] = omega_n[1]
@@ -239,7 +223,6 @@ elif (m == 1 or m == -1):
   plt.plot(k_arr, omega1_arr, 'g', linewidth = 2.0, label='$\omega_2$', alpha = 0.8)
   plt.plot(k_arr, omega2_arr, 'b', linewidth = 2.0, label='$\omega_3$', alpha = 0.6)
   plt.legend()
-#plt.xlabel('$k$')
   plt.ylabel('$\omega$')
 
   ax = plt.subplot(3,1,3)
@@ -267,4 +250,7 @@ if (m == 1):
 plt.show()
 quit()
 
+#--------------------------------------
+# All done.
+#--------------------------------------
 

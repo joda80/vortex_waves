@@ -10,33 +10,35 @@ import shapely
 from shapely import geometry
 from shapely.geometry import LineString, Point
 
-# Solving Loiseloix nondimensional dispersion equation
-# Here we prescribe complex omega values and determine
+# Solving the nondimensional dispersion relation by 
+# Loiseleux et al. (1998, PoF).
+# The complex omega values are prescribed and determine
 # the complex beta; this is inserted into the dispersion
-# relation and its roots are found in the complex plane.
-# This will run for several hours.
-# Run in background: nohup python -u kelvin_dispersion.py &
-
-# Caveat: For large k, omega it doesn't work because
-# the omega increases (Doppler effect due to nonzero W)
-# but when Doppler-shifting the frequency they make no
-# sense either.  Thought: Shifting it wong. Not noticing
-# this effect for small'ish k, because the effect of
-# the Doppler shift is small.
+# relation and its roots are found graphically in the complex plane.
+#
+# When no unstable growth rate is found, this is often tied
+# to the resolution of the D field, so increasing nmax usually
+# helps; also, omega_min and omega_max must cover the relevant domain
+# (omega_min may be negative in some cases).  The present settings
+# work, but nmax, omega_min, and omega_max may need to be adjusted
+# if different azimuthal wavenumbers or axial wavenumbers are considered.
+#
+# Contact johannes.dahl@ttu.edu for questions.
 
 #------------------------------------------------
 # Set parameters
 #------------------------------------------------
 
-S = 1.0
-a = 0.0
+S = 1.0  # Swirl parameter
+a = 0.0  # Co-flow parameter 
 
-# Production plot setting m = 0
-#m = 0
+# m = 0
+# -----
+
+#m = 0 # Reproducing Loiseleux' plot (not used in teh MWR review paper)
 #kmax = 2.0
 #omega_max = 2.0
 #nmax = 1501
-#itest = 0
 #nnk = 21 # For how many k
 
 #m = +1
@@ -50,20 +52,8 @@ nnk = 31
 kmin = 0.001
 kmax = 5.0
 
-# Playing around
-
-nnk = 5
-kmin = 0.001
-kmax = 0.25
-
-
-# To find beta
-nmax = 601
-nnk = 2
-kmax = 1.1 #1.0
-
 omega_min_r = 0.0
-omega_max_r = 4.0 # Use half of the value desired
+omega_max_r = 4.0
 omega_min_i = 0.0
 omega_max_i = 8.0
 
@@ -78,18 +68,14 @@ omega_max_i = 8.0
 #kmin = 0.001
 #kmax = 5.0
 
-#For 2D plot
-
-#nnk = 6
-#nmax = 601
-
 #omega_min_r = -5.0
 #omega_max_r = 5.0
 #omega_min_i = 0.0
 #omega_max_i = 5.0
 
-# Only for write-out during program execution
-eps = 0.001 # 0.001# 0.001 #  0.005 # 1.E-3 This value will depend on the resolution (nmax)
+# To make sure the solver only picks unstable modes, omega_i must be larger than eps
+
+eps = 0.001 # This value needs to be larger when nmax is reduced
 
 #-------------------------------------------------
 # Start
@@ -113,71 +99,51 @@ for k in np.linspace(kmin,kmax,nnk):
 
   fr2d = np.zeros(shape=(nmax,nmax))
   fi2d = np.zeros(shape=(nmax,nmax))
-  X = np.zeros(shape=(nmax,nmax))
-  Y = np.zeros(shape=(nmax,nmax))
 
   counter = 0
 
-  for mm in np.arange(nmax):  # incrementing real argument [0,2]
-    for nn in np.arange(nmax):  # incrementing imaginary argument [0,2]
-      omega_real =  omega_min_r + 2.0*omega_max_r/(np.real(nmax-1)) * np.real(mm) 
-      omega_imag = (omega_min_i + omega_max_i/(np.real(nmax-1)) * np.real(nn) ) * 1j
-      omega = omega_real + omega_imag
-  
-      X[nn,mm] = omega_min_r + 2.0*omega_max_r/(np.real(nmax-1)) * np.real(mm)
-      Y[nn,mm] = omega_min_i + omega_max_i/(np.real(nmax-1)) * np.real(nn)
- 
-# Tell us how far along we are
+  omega_r = np.linspace(omega_min_r, omega_max_r, nmax)
+  omega_i = np.linspace(omega_min_i, omega_max_i, nmax) * 1j
 
-#      if (nn == 50 and (mm % 50 == 0)):
-#        print(k, nn, mm, omega)
+  X, Y = np.meshgrid(omega_r, omega_i)
 
-# Dimensionless coefficients:
+  Omega = X + Y  # Not to be confused with the base state angular velocity, which does
+                 # not appear in the dimensionless formulation
 
-      g    = omega - m*S - k
-      beta = k * np.sqrt( (4.0*(S**2/g**2) - 1.0 ) )
+  g    = Omega - m*S - k
+  beta = k * np.sqrt( (4.0*(S**2/g**2) - 1.0 ) )
 
 # Bessel function (1st kind) and its derivative
 
-      bess     = scipy.special.jv (m, beta)
-      bess_der = scipy.special.jvp(m, beta)
+  bess     = scipy.special.jv (m, beta)
+  bess_der = scipy.special.jvp(m, beta)
 
 # Modified Bessel function (2nd kind) and its derivative
 
-      mbess     = scipy.special.kv (m, k)
-      mbess_der = scipy.special.kvp(m, k)
+  mbess     = scipy.special.kv (m, k)
+  mbess_der = scipy.special.kvp(m, k)
 
 # Dispersion relation
 
-      lhs = (g+k)**2 * ( beta * bess_der/(bess+1.0E-12) - 2.0*S*m/g )
-      rhs = -g**2 * beta**2 / k * mbess_der/(mbess+1.0E-12) 
+  lhs = (g+k)**2 * ( beta * bess_der/(bess+1.0E-12) - 2.0*S*m/g )
+  rhs = -g**2 * beta**2 / k * mbess_der/(mbess+1.0E-12) 
 
-      D = lhs - rhs
+  D = lhs - rhs
 
-      fr2d[mm,nn] = D.real
-      fi2d[mm,nn] = D.imag
+  fr2d = D.real
+  fi2d = D.imag
 
-#  fig, ax = plt.subplots()
+# Graphical solution (do not delete this part; C1 and C2 are used below)
 
-  print('Done with omega-loop')    
+  ox = np.linspace(omega_min_r, omega_max_r, nmax)
+  oy = np.linspace(omega_min_i, omega_max_i, nmax)
 
-#  x = np.linspace(omega_min_r, omega_max,nmax)
-#  y = np.linspace(omega_min_i, omega_max,nmax)
-#
-#  X,Y = np.meshgrid(x,y)
+  XX, YY = np.meshgrid(ox,oy)
 
-  fr2d = fr2d.T
-  fi2d = fi2d.T
+  C1 = plt.contour(XX, YY, fr2d, levels = [0.0], linewidths = 2.0, colors = 'k')
+  C2 = plt.contour(XX,YY, fi2d, levels = [0.0], linewidths = 2.0,colors = 'r')
 
-  #clevels= np.linspace(-2.0, 2.0, 20)
-  #CS1 = plt.contour(X, Y, fr2d, levels = clevels) #  colors = 'k')
-  #ax.clabel(CS1, inline=1, fontsize=10, fmt = '%1.1f')
-  C1 = plt.contour(X, Y, fr2d, levels = [0.0], linewidths = 2.0, colors = 'k')
-
-  #clevels= np.linspace(-2.0, 2.0, 20)
-  #CS1 = plt.contour(X, Y, fi2d)#, levels = clevels) #  colors = 'k')
-  #ax.clabel(CS1, inline=1, fontsize=10, fmt = '%1.1f')
-  C2 = plt.contour(X, Y, fi2d, levels = [0.0], linewidths = 2.0, colors = 'r')
+# This is not needed but interesting to look at
 
   plt.savefig("./dispersion_2d.png", dpi=120)
 
@@ -194,11 +160,6 @@ for k in np.linspace(kmin,kmax,nnk):
 
   ncts1 = len(aa) # number of "blocks" or pairs defining a contour in first plot
   ncts2 = len(bb)
-
-# See the structure
-#print(aa)
-#print(aa[0][0], aa[0][1], aa[0][2]) # First block of pairs
-#print(aa[1][0], aa[1][1], aa[1][2]) # second bloc of pairs
 
   cc = 0
   px = np.zeros(100)
@@ -267,39 +228,41 @@ for k in np.linspace(kmin,kmax,nnk):
             oi_arr[nk] = py[maxindex]
 
             if (ppy > eps): # Only pick the unstable mode (omega_i > 0) 
-#              or_arr[nk] = ppx
-#              oi_arr[nk] = ppy
               print('')
               print('S ', 'step ', 'm', 'k ', 'omega_r ', 'omega_i ', S, nk, m, k, ppx, ppy)
               print(px[maxindex],py[maxindex])
 
-##^   
   nk = nk + 1
+##^
 
 #------------------------------------------------------------
-# Plot the dispersion relationship
+# Write/plot the dispersion relationship
 #------------------------------------------------------------
 
 k_arr = np.linspace(0.001,kmax,nnk)
 
-#or_arr = or_arr - m*S - (1.0 + a) * k_arr
-#or_arr = or_arr - (m*S + (1.0 + a)*k_arr)
-
 beta_arr = np.zeros(nnk)
 
-for i in np.arange(nnk):
+# Write data to file:
 
-  g    = or_arr[i] - m*S - k_arr[i]
-  beta_arr[i] = k_arr[i] * np.sqrt( (4.0*(S**2/g**2) - 1.0 ) )  
+with open('dispersion_relation_rankine_unstable.txt', 'w') as f:
+  f.write('k (m-1)  omega_r (s-1)  omega_1 (s-1)\n')
 
-  print(g) 
-  print('Output') 
-  print(k_arr[i], or_arr[i], oi_arr[i], beta_arr[i])
+  for i in np.arange(nnk):
+
+    wstr = str(k_arr[i])+' '+str(or_arr[i])+' '+str(oi_arr[i])+'\n'
+    f.write(wstr)
+    print(k_arr[i], or_arr[i], oi_arr[i])
+f.close()
 
 plt.clf() # Somehow Python wants to plot the integrated previous figure
 
 plt.plot(k_arr, or_arr, 'k', linewidth = 2.0)
 plt.plot(k_arr, oi_arr, 'r', linewidth = 2.0)
-plt.savefig("./dispersion.png", dpi=120)
+#plt.savefig("./dispersion.png", dpi=120)
 plt.show()
+
+#------------------------------------------------------------
+# The End.
+#------------------------------------------------------------
 

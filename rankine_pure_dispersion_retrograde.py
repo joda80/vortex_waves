@@ -6,14 +6,25 @@ import math
 from scipy import optimize
 from scipy import special
 from scipy import misc
-import shapely
-from shapely import geometry
-from shapely.geometry import LineString, Point
 
-# Solving Kelvin's equation 50 (nondimensional version)
+# Solving Kelvin's (1880) equation 50 (nondimensional version)
 # Here we define beta, find the solution of the dispersion
 # relation, and then calculate omega.
 #
+# This script plots the dispersion relation for
+# spiral modes in a Rankine vortex. The 
+# root finder requires a high resolution of the
+# function (nmax must be large) to resolve the peaks.
+# The advantage over the built-in root finder is that
+# no prior information is needed about where the root
+# is located.
+#
+# If the roots cannot be identified, the wave frequency
+# will be zero; in this case adjust nmax and nnk to
+# ensure that all peaks are sufficiently resolved.
+#
+# Questions/comments: johannes.dahl@ttu.edu
+
 #------------------------------------------------
 # Set parameters
 #------------------------------------------------
@@ -22,26 +33,15 @@ m = 1  # m >0
 
 # Best not to change these:
 
-#kmax = 5.0 # Max k
-kmax = 5.15 # 6.0 #  11.0
-nmax = 100001
-beta_max = 12.0
-
-nnk = 2 # 36 # For how many k
+kmax     =  6.0   # maximum axial wavenumber
+nmax     = 100001 # Resolution of the curves whose intersections
+                  # are to be found
+beta_max = 12.0   # maximum eigenvalue
+nnk      = 36     # For how many k
 
 #-------------------------------------------------
 # Start
 #-------------------------------------------------
-
-#beta = 3.8317
-#r0 = 1.20051152
-#u0 = -0.25655284
-#jv = scipy.special.jv(1, beta*r0)
-#w0 = 1.0/np.pi * u0 * 3.8317/jv
-#print(w0)
-#print(beta/np.pi)
-#
-#quit()
 
 omega0_arr = np.zeros(nnk)
 omega1_arr = np.zeros(nnk)
@@ -106,27 +106,15 @@ for k in np.linspace(0.05,kmax,nnk):
 # End loop through beta
 
   # Finding the intersections in decreasing branches.
-  # First reduce the rhs so it intersects the imperfectly resolved
-  # peaks.  This increses the solution just a little, but close enough
-  # for our purposes.
  
   counter = 0
 
- # Special loop for the smallest roots
-
   disp = lhs1d - rhs1d
   for i in np.arange(nmax-1):
-#    if (disp[i] > 0 and disp[i+1] <= 0 and beta_arr[i] <= 2.0):
     if (disp[i] > 0 and disp[i+1] <= 0 and beta_arr[i]):
       val  [counter] = lhs1d[i] # value of lhs where lhs = rhs
       beta0[counter] = beta_arr[i]
       counter = counter + 1
-
-#  for i in np.arange(nmax-1):
-#    if (lhs1d[i] >= rhs1d[i] and lhs1d[i+1] < rhs1d[i] and beta_arr[i] > 2.0):
-#      val  [counter] = lhs1d[i] # value of lhs where lhs = rhs
-#      beta0[counter] = beta_arr[i]
-#      counter = counter + 1
 
 #---------------------------------------------------
 # Plot graphical version of the solution for some k
@@ -134,8 +122,8 @@ for k in np.linspace(0.05,kmax,nnk):
 
   ax = plt.subplot(4,1,1)
 
-#  if (k >=1.0 and k < 1.2 and beta0[0] > 0):
-  if (k == 5.15):
+  if (k >=1.0 and k < 1.2 and beta0[0] > 0):
+#  if (k == 5.15):
 
     y = np.linspace(0, beta_max, nmax)
 
@@ -151,7 +139,6 @@ for k in np.linspace(0.05,kmax,nnk):
              markeredgewidth=1.0, markeredgecolor='b')
     plt.plot(y, lhs1d, 'k', linewidth = 1.0) 
     plt.ylim(-1,1)
-#    plt.xlabel('$\beta$')
     plt.ylabel('lhs (black) and rhs (blue)')
 #----------------------------------------
 # Calculate wave frequency 
@@ -159,7 +146,7 @@ for k in np.linspace(0.05,kmax,nnk):
 
   omega_n = m - 2.0 * k / np.sqrt(beta0**2 + k**2)
 
-  print('H', c1, k, beta0[0:4]) #, omega_n[0],  np.sqrt(beta0[0]**2 + k**2))
+  print(c1, k, beta0[0:4]) 
 
   omega0_arr[c1] = omega_n[0]
   omega1_arr[c1] = omega_n[1]
@@ -176,10 +163,10 @@ print(k_arr)
 # Obtaining the group speeds (centered difference; at end points: one-sided differences)
 
 cg0 = 0.0*omega0_arr
-dk =  kmax / nnk
+dk  =  kmax / nnk
 
-cg0[0] = (omega0_arr[1]-omega0_arr[0]) / (k_arr[1] - k_arr[0])
-cg0[1:-2] = 0.5 / dk * ( omega0_arr[2:-1] - omega0_arr[0:-3] ) 
+cg0    [0] = (omega0_arr[1]-omega0_arr[0]) / (k_arr[1] - k_arr[0])
+cg0 [1:-2] = 0.5 / dk * ( omega0_arr[2:-1] - omega0_arr[0:-3] ) 
 cg0[nnk-2] = (omega0_arr[nnk-2]-omega0_arr[nnk-3]) / (k_arr[nnk-2] - k_arr[nnk-3])
 cg0[nnk-1] = (omega0_arr[nnk-1]-omega0_arr[nnk-2]) / (k_arr[nnk-1] - k_arr[nnk-2])
 
@@ -187,8 +174,8 @@ cg0[nnk-1] = (omega0_arr[nnk-1]-omega0_arr[nnk-2]) / (k_arr[nnk-1] - k_arr[nnk-2
 
 cg1 = 0.0*omega1_arr
 
-cg1[0] = (omega1_arr[1]-omega1_arr[0]) / (k_arr[1] - k_arr[0])
-cg1[1:-2] = 0.5 / dk * ( omega1_arr[2:-1] - omega1_arr[0:-3] )
+cg1    [0] = (omega1_arr[1]-omega1_arr[0]) / (k_arr[1] - k_arr[0])
+cg1 [1:-2] = 0.5 / dk * ( omega1_arr[2:-1] - omega1_arr[0:-3] )
 cg1[nnk-2] = (omega1_arr[nnk-2]-omega1_arr[nnk-3]) / (k_arr[nnk-2] - k_arr[nnk-3])
 cg1[nnk-1] = (omega1_arr[nnk-1]-omega1_arr[nnk-2]) / (k_arr[nnk-1] - k_arr[nnk-2])
 
@@ -196,15 +183,15 @@ cg1[nnk-1] = (omega1_arr[nnk-1]-omega1_arr[nnk-2]) / (k_arr[nnk-1] - k_arr[nnk-2
 
 cg2 = 0.0*omega2_arr
 
-cg2[0] = (omega2_arr[1]-omega2_arr[0]) / (k_arr[1] - k_arr[0])
-cg2[1:-2] = 0.5 / dk * ( omega2_arr[2:-1] - omega2_arr[0:-3] )
+cg2    [0] = (omega2_arr[1]-omega2_arr[0]) / (k_arr[1] - k_arr[0])
+cg2 [1:-2] = 0.5 / dk * ( omega2_arr[2:-1] - omega2_arr[0:-3] )
 cg2[nnk-2] = (omega2_arr[nnk-2]-omega2_arr[nnk-3]) / (k_arr[nnk-2] - k_arr[nnk-3])
 cg2[nnk-1] = (omega2_arr[nnk-1]-omega2_arr[nnk-2]) / (k_arr[nnk-1] - k_arr[nnk-2])
 
 cg3 = 0.0*omega3_arr
 
-cg3[0] = (omega3_arr[1]-omega3_arr[0]) / (k_arr[1] - k_arr[0])
-cg3[1:-2] = 0.5 / dk * ( omega3_arr[2:-1] - omega3_arr[0:-3] )
+cg3    [0] = (omega3_arr[1]-omega3_arr[0]) / (k_arr[1] - k_arr[0])
+cg3 [1:-2] = 0.5 / dk * ( omega3_arr[2:-1] - omega3_arr[0:-3] )
 cg3[nnk-2] = (omega3_arr[nnk-2]-omega3_arr[nnk-3]) / (k_arr[nnk-2] - k_arr[nnk-3])
 cg3[nnk-1] = (omega3_arr[nnk-1]-omega3_arr[nnk-2]) / (k_arr[nnk-1] - k_arr[nnk-2])
 
@@ -220,7 +207,6 @@ if (m == 0):
   plt.plot(k_arr, omega1_arr, 'g', linewidth = 2.0, label='$\omega_1$', alpha = 0.8)
   plt.plot(k_arr, omega2_arr, 'b', linewidth = 2.0, label='$\omega_2$', alpha = 0.6)
   plt.legend()
-#plt.xlabel('$k$')
   plt.ylabel('$\omega$')
 
   ax = plt.subplot(4,1,3)
@@ -239,9 +225,7 @@ elif (m == 1 or m == -1):
   plt.plot(k_arr, omega3_arr, 'b', linewidth = 1.4, label='$\omega_3$')
   plt.ylim(-1.5,1.5) 
   plt.legend(loc='upper right', prop={'size': 7})
-#  plt.xscale("log")
 
-#plt.xlabel('$k$')
   plt.ylabel('$\omega$')
   plt.xlim(0.0,6.0)
 
