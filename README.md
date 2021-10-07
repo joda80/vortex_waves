@@ -1,15 +1,15 @@
 # vortex_waves
 
-This repository contains scripts and a few text files used to generate the figures in the MWR review article:
+This repository accompanies the review paper:
 
 Dahl, J. M. L., 2021: Centrifugal Waves in Tornado-like Vortices: Kelvin's Solutions and Their Applications to Multiple-Vortex
 Development and Vortex Breakdown. Mon. Wea. Rev., 149, 3173-3216, https://doi.org/10.1175/MWR-D-20-0426.1.
 
-Note that many figures have been touched up by adding/modifying figure and axis labels (i.e., not all plots are identical to the published version).
+The repository contains scripts and a few text files used to generate the figures in the paper, as well as a document with clarifications and a list of minor typos identified in the paper. Note that many figures have been touched up by adding/modifying figure and axis labels (i.e., not all plots are precisely identical to the published version).
 
 The following files are included:
 
-1. clarifications.pdf: Some clarifications and correction of minor typos.
+1. clarifications.pdf: Some clarifications on the paper and corrections of minor typos.
 
 2. couette_dispersion_m0.py: Python script that calculates and plots the dispersion relation for axisymmetric waves in a
    vortex bounded by cylindrical walls. Fig. 7 in the manuscript.
