@@ -5,7 +5,7 @@ This repository accompanies the review paper:
 Dahl, J. M. L., 2021: Centrifugal Waves in Tornado-like Vortices: Kelvin's Solutions and Their Applications to Multiple-Vortex
 Development and Vortex Breakdown. Mon. Wea. Rev., 149, 3173-3216, https://doi.org/10.1175/MWR-D-20-0426.1.
 
-The repository contains scripts and a few text files used to generate the figures in the paper, as well as a document with clarifications and a list of minor typos identified in the paper. Note that many figures have been touched up by adding/modifying figure and axis labels (i.e., not all plots are precisely identical to the published version).
+The repository contains scripts and a few text files used to generate the figures in the paper, as well as a document with clarifications and a list of errata. Note that many figures have been touched up by adding/modifying figure and axis labels (i.e., not all plots are precisely identical to the published version).
 
 The following files are included:
 
